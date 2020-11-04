@@ -1,0 +1,257 @@
+﻿import inet.http;
+import zlib.httpFile;
+import process.popen;
+import wsock.tcp.simpleHttpServer;
+import xray.config; 
+import inet.conn;
+import config;
+import wsock;
+
+namespace xray.core;
+
+var getXrayCoreUrl = function(){
+	var http = ..inet.http();
+	var url = http.location("https://github.com/XTLS/Xray-core/releases/latest");
+	http.close();
+	
+	if(!url)return;
+	
+	var tag = ..string.match(url,"[^/]+$")
+	if(!tag) return;
+	
+	return "https://github.com/XTLS/Xray-core/releases/download/" 
+		+ tag + "/xray-windows-" +	(..process().isWow64() ? "64" : "32") + ".zip",tag
+} 
+
+getPath = function(hwnd){
+	var path = ..io.fullpath("/xray-core/xray.exe");
+	if(..io.exist(path)){
+		return path;
+	}
+		
+	var path = ..io.appData("/xray/core/xray.exe");
+	if(..io.exist(path)){
+		return path;
+	}
+	
+	var url = getXrayCoreUrl();
+	if(!url) return null;
+	
+	if( ..zlib.httpFile.download(url,"正在下载 Xray Core"
+		,..io.appData("/xray/download/")
+		,..io.appData("/xray/core/"),,hwnd) )
+		return ..io.exist(path);
+} 
+
+updateCore = function(){
+	var coreDir = ..io.exist("/xray-core/xray.exe") ? ..io.fullpath("/xray-core/");
+	if(!coreDir){
+		coreDir = ..io.appData("/xray/core/");
+	}
+	
+	var url,versionTag = getXrayCoreUrl();
+	if(!url) return null; 
+	  
+	import fsys;
+	fsys.delete(..io.appData("/xray/temp/"))
+	
+	if( ..zlib.httpFile.download(url,"正在下载 Xray Core"
+		,..io.appData("/xray/download/")
+		,..io.appData("/xray/temp/"),,..mainForm.hwnd) ){
+			if(..io.exist(..io.appData("/xray/temp/xray.exe"))){
+
+				import process.file;
+				process.file.terminate(..io.joinpath(coreDir,"xray.exe")); 
+				fsys.copy(..io.appData("/xray/temp/xray.exe"),..io.joinpath(coreDir,"xray.exe")); 
+				
+				import inet.conn;
+				inet.conn.setProxy();
+				
+				return versionTag;
+			}
+		} 	 
+}
+
+var serverMain = ..wsock.tcp.simpleHttpServer.mainThread( 
+	function(response,request,session){ 
+
+		if(request.path=="/proxy.pac"){
+			var pacData = ..string.replace(..string.load(pacPath)
+				,"var\s+proxy\s+=\s+%''","var proxy = 'SOCKS "+ request.environ.SERVER_NAME +":"+inboundPort.get()+";'");
+			response.contentType = "application/x-ns-proxy-autoconfig";
+
+			response.write(pacData);  
+		}
+		elseif(request.path=="/config.json"){
+			import xray.config; 
+			response.contentType = "text/json"; 
+			response.write( xray.config.get() );
+		} 
+		else {
+			response.write("hello")
+		}
+		
+	} 	
+);
+
+var pacPath = ..io.appData("/xray/proxy.pac.txt");
+if( ! ..io.exist(pacPath) ){
+	..string.save(pacPath,$"/pac.txt" )
+}
+
+var inboundPort = ..thread.var();
+inboundPort.set( ..wsock.getFreePort() );
+serverMain.threadGlobal = {
+	inboundPort = inboundPort;
+	pacPath = pacPath;
+}
+
+getPort = function(){
+	return inboundPort.get();
+}
+
+setPort = function(port){
+	inboundPort.set(port : ..wsock.getFreePort() );
+}
+
+serverMain.threadNum = 50; 
+getPacUrl = function(localIp){
+	return serverMain.getUrl("/proxy.pac?" + ..time.tick(),localIp );
+}
+
+getPacPort = function(){
+	var ip,port = serverMain.getLocalIp();
+	return port;
+}
+
+restartPac = function(){
+	var pacIp,pacPort = serverMain.getLocalIp();
+	if(pacIp!==..config.core.default.inbounds[[1]][["listen"]] 
+		|| pacPort != ..config.core.default.inbounds[[1]][["pacPort"]]){
+		serverMain.stop();
+		var ok,err = serverMain.start(..config.core.default.inbounds[[1]][["listen"]] : "127.0.0.1",..config.core.default.inbounds[[1]][["pacPort"]] : 0 );
+		if(!ok){
+			return false,err;
+		}
+	}
+	
+	return true;
+}
+
+getConfigUrl = function(){
+	return serverMain.getUrl("/config.json");
+}
+
+import wsock.tcp.client;
+var client = wsock.tcp.client();  
+if( client.connectTimeout("127.0.0.1",..config.core.default.inbounds[[1]][["pacPort"]] ,0.5) ){
+	..config.core.default.inbounds[[1]][["pacPort"]] = 0
+} 
+client.close(); 
+
+var client = wsock.tcp.client();  
+if( client.connectTimeout("127.0.0.1",..config.core.default.inbounds[[1]][["port"]] ,0.5) ){
+	..config.core.default.inbounds[[1]][["port"]] = 0
+} 
+client.close(); 
+		
+serverMain.start(..config.core.default.inbounds[[1]][["listen"]] : "127.0.0.1",..config.core.default.inbounds[[1]][["pacPort"]] : 0 );
+
+
+import process.popen;
+updateGitConfigGithub = function(enableProxy){
+   if(enableProxy===null){
+   		enableProxy = (..config.proxy.mode === "pac") || (..config.proxy.mode === "proxy")
+   		
+   		if(!..config.proxy.enableGitConfigGithub){
+    		return;
+    	}
+   } 
+
+    var git;
+	if(enableProxy){
+		git = ..process.popen("git config --global http.https://github.com.proxy socks5://127.0.0.1:" + inboundPort.get())
+		
+		var path = ..io.getSpecial(0x28/*_CSIDL_PROFILE*/,".ssh/config")
+		var str = ..string.load(path):"";
+		if(..string.find(str,"Host\s+github.com" ) ){
+			if(!..string.find(str,"Host\s+github.com\s+ProxyCommand\s+connect\s+\-S\s+127\.0\.0\.1\:\d+ \-a none \%h \%p" )){
+				str = ..string.replace(str,"Host\s+github.com",'Host github.com\r\n    ProxyCommand connect -S 127.0.0.1:' + inboundPort.get() + ' -a none %h %p')
+			}
+		}
+		else {
+			str = str + '\r\n\r\nHost github.com\r\n    ProxyCommand connect -S 127.0.0.1:' + inboundPort.get() + ' -a none %h %p'
+		}
+		
+		..string.save(path,str)
+	}
+	else {
+		git = ..process.popen("git config --global --unset http.https://github.com.proxy")
+		var path = ..io.getSpecial(0x28/*_CSIDL_PROFILE*/,".ssh/config")
+		var str = ..string.load(path):"";
+		if(..string.find(str,"Host\s+github.com" ) ){
+			if(..string.find(str,"Host\s+github.com\s+ProxyCommand\s+connect\s+\-S\s+127\.0\.0\.1\:\d+ \-a none \%h \%p" )){
+				str = ..string.replace(str,"Host\s+github.com\s+ProxyCommand\s+connect\s+\-S\s+127\.0\.0\.1\:\d+ \-a none \%h \%p",'Host github.com')
+				..string.save(path,str)
+			}
+		}
+	} 
+}
+
+
+var prcsXray;
+import process.job.limitKill;
+restart = function(editor,outbound){
+    if(!outbound){
+    	return null,"错误的配置"
+    }
+    
+	if(prcsXray){
+		prcsXray.terminate();
+		prcsXray = null;
+	}
+	
+	var corePath = getPath(editor.hwnd);
+	if(!corePath) return false,"启动失败,未找到xray.exe";
+
+
+	..inet.conn.setProxy();
+	..xray.config.setOutbound(outbound);
+	
+	var jsonPath = ..io.joinpath(..io.splitpath(corePath).dir,"config.json");
+	..string.save(jsonPath,..xray.config.getConfigJson() )
+		
+	prcsXray = ..process.popen(corePath,"run","-c=config.json" );
+	prcsXray.assignToJobObject(process.job.limitKill);	
+	prcsXray.logResponse(editor);
+	
+	if(..config.proxy.mode === "pac"){
+		..inet.conn.setProxy(,"SOCKS=127.0.0.1:" + inboundPort.get());
+		..inet.conn.setProxyAutoConfig(,getPacUrl()); 
+	}
+	elseif(..config.proxy.mode === "proxy"){
+		..inet.conn.setProxyAutoConfig(,getPacUrl())
+		..inet.conn.setProxy(,"SOCKS=127.0.0.1:" + inboundPort.get());
+	}
+	else {
+		..inet.conn.setProxy();
+	}
+	
+	updateGitConfigGithub();
+	return true;
+}
+
+stop = function(){
+	if(prcsXray){
+		prcsXray.terminate();
+		prcsXray = null;
+	}	
+	
+	if(serverMain){
+		serverMain.stop();
+		serverMain = null;
+	}
+	
+	..inet.conn.setProxy();
+   	updateGitConfigGithub(false);
+}
