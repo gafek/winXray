@@ -13,7 +13,7 @@ vmess://eyJhZGQiOiJjMzVzNS5qYW1qYW1zLm5ldCIsImFpZCI6OCwiaWQiOiJkMmQyZGI2MS1lYzk4
 vmess://eyJhZGQiOiJjMzVzODAxLmphbWphbXMubmV0IiwiYWlkIjo4LCJpZCI6ImQyZDJkYjYxLWVjOTgtNDYzZS04NjFlLWE5NTBjZjVmMzYxMCIsIm5ldCI6InRjcCIsInBvcnQiOiIxMDM5OCIsInBzIjoiYzM1czgwMS5qYW1qYW1zLm5ldCIsInRscyI6Im5vbmUiLCJ0eXBlIjoibm9uZSIsInYiOjJ9
 </pre></details>    
 
-之前我用过很多类似的代理客户端，经常用一会就挂掉了，有些来来回回测试很久才找到下一个可用的服务器，而且有时候怎么切换都不行，一定要把整个软件退出重启才能恢复。而且很多类似软件在WIN10上有一个奇怪的BUG - PAC代理用一段时间就会卡死一定要来回切换代理设置才能正常，其实这些软件里提供的很多功能我并不需要，我只想简单稳定的用下 google 找点技术资料提升下工作效率。但是在网上找了很久都没找到，所以决定自己动手写一个，还好用 aardio 写软件的速度很快 - 大概用了几个小时就完成了 winXray 的主要代码，改进了几个版本以后就很稳定了，我自己用了 winXray  几个月再也没有遇到 google 抽风访问不了的问题。    
+之前我用过很多代理客户端，经常用一会就挂掉了，有些测试很久才找到下一个可用的服务器，有时怎么切换都不行，一定要把整个软件退出重启才能恢复。而且在WIN10上都有相同的BUG:PAC代理用一段时间就会卡死( winXray已经通过自行实现PAC服务器解决了这个问题 )，其实这些软件里提供的很多功能我并不需要，我只想愉快地用下 google 找点技术资料提升工作效率。但是在网上找了很久都没找到适合的软件，于是决定自己动手写一个，还好用 aardio 写软件的速度很快 - 大概用了几个小时就完成了 winXray 的主要代码，改进了几个版本以后就很稳定了，**我自己用了 winXray  几个月再也没有遇到 google 抽风访问不了的问题**。    
 
 
 ![winXray](./screenshots/winXray.png)
