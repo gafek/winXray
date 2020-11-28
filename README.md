@@ -18,8 +18,8 @@ vmess://eyJhZGQiOiJjMzVzODAxLmphbWphbXMubmV0IiwiYWlkIjo4LCJpZCI6ImQyZDJkYjYxLWVj
 
 ![winXray](./screenshots/winXray.png)
 
-winXray支持批量导入 vmess、ss、trojan …… 等格式的分享链接，  
-也可以导入订阅链接，以及 base 64、json、文本表格 …… 等不同格式的服务器配置都可以自动识别并导入 winXray。
+winXray支持批量导入 vless、vmess、ss、trojan …… 等格式的分享链接，  
+也可以导入订阅链接，以及 base 64、json …… 等不同格式的服务器配置。
 
 ![服务器配置](./screenshots/config.json.png)
 
