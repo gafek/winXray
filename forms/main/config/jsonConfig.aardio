@@ -7,7 +7,7 @@ advancedConfig={cls="\forms\main\config\advancedConfig.aardio";left=9;top=29;rig
 btnUpdate={cls="plus";text="更新服务器配置";left=687;top=753;right=856;bottom=784;align="left";bgcolor=11580047;db=1;dr=1;font=LOGFONT(h=-13);iconStyle={align="left";font=LOGFONT(h=-13;name='FontAwesome');padding={left=22}};iconText='\uF0C7';notify=1;textPadding={left=40};z=5};
 editCoreConfig={cls="edit";left=9;top=29;right=902;bottom=739;db=1;dl=1;dr=1;dt=1;edge=1;hide=1;hscroll=1;multiline=1;vscroll=1;z=8};
 editOutbounds={cls="edit";left=9;top=29;right=902;bottom=739;db=1;dl=1;dr=1;dt=1;edge=1;hscroll=1;multiline=1;vscroll=1;z=7};
-lbTip={cls="static";text="可在下面输入JSON数组、或每行一个服务器链接、或每行以空格分开的服务器配置文本：";left=11;top=9;right=899;bottom=29;color=3947580;dl=1;dr=1;dt=1;font=LOGFONT(h=-13);transparent=1;z=6};
+lbTip={cls="static";text="可在下面输入JSON数组、或每行一个服务器分享链接：";left=11;top=9;right=899;bottom=29;color=3947580;dl=1;dr=1;dt=1;font=LOGFONT(h=-13);transparent=1;z=6};
 navAdvancedConfig={cls="plus";text="其他配置";left=315;top=750;right=389;bottom=782;border={top=1;color=-16744448};db=1;dl=1;z=9};
 navCoreConfig={cls="plus";text="Xray配置 ( JSON )";left=184;top=750;right=315;bottom=782;border={top=1;color=-16744448};db=1;dl=1;z=2};
 navOutbounds={cls="plus";text="服务器配置( JSON )";left=53;top=750;right=184;bottom=782;border={top=1;color=-16744448};db=1;dl=1;z=1};
@@ -43,7 +43,7 @@ tbs.onSelchange = function(idx,strip,form){
 		winform.editOutbounds.hide = false;
 		winform.advancedConfig.hide = true;
 		winform.editCoreConfig.hide = true;
-		winform.lbTip.text = `可在下面输入JSON数组、或每行一个服务器链接、或每行以空格分开的服务器配置文本：`;
+		winform.lbTip.text = `可在下面输入JSON数组、或每行一个服务器分享链接：`;
 		winform.btnUpdate.text = "更新服务器配置";
 		winform.btnUpdate.hide = false;
 	}
